@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consulta Poder Judicial</title>
+    <style>
+        body {
+            font-family: "Arial", sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            padding: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        input {
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Consulta Poder Judicial</h1>
+
+    <label for="poderJudicialId">Ingrese ID del Poder Judicial: </label>
+    <input type="text" id="poderJudicialId" placeholder="ID del Poder Judicial" />
+
+    <button onclick="loadData()">Cargar Datos</button>
+
+    <table id="poderJudicialTable">
+        <thead>
+            <tr>
+                <th>Condena</th>
+                <th>Periodo</th>
+                <th>DNI</th>
+                <th>Nombre</th>
+                <th>Fecha de Entrada</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Datos de la tabla se llenarán aquí dinámicamente -->
+        </tbody>
+    </table>
+
+    <script>
+        const graphqlEndpoint = "http://localhost:4000/graphql";
+
+        async function fetchData(query, variables) {
+            const response = await fetch(graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: JSON.stringify({ query, variables }),
+            });
+
+            const data = await response.json();
+            return data.data;
+        }
+
+        async function loadData() {
+            const poderJudicialId = document.getElementById("poderJudicialId").value;
+
+            const query = `
+          query GetPoderJudicialData($Id: String!) {
+            getPoderJudicialById(id: $Id) {
+              _id
+              condena
+              periodo
+            }
+            getPresosByPoderJudicial(idPoderJudicial: $Id) {
+              _id
+              dni
+              fecha_entrada
+              nombre
+            }
+          }
+        `;
+            const variables = {
+                Id: poderJudicialId,
+            };
+
+            const result = await fetchData(query, variables);
+            const poderJudicialData = result.getPoderJudicialById;
+            const presosData = result.getPresosByPoderJudicial;
+
+            const tableBody = document.querySelector("#poderJudicialTable tbody");
+            tableBody.innerHTML = "";
+            debugger
+            presosData.forEach((preso) => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = poderJudicialData.condena;
+                row.insertCell(1).textContent = poderJudicialData.periodo;
+                row.insertCell(2).textContent = preso.dni;
+                row.insertCell(3).textContent = preso.nombre;
+                row.insertCell(4).textContent = preso.fecha_entrada;
+            });
+        }
+    </script>
+</body>
+
+</html>
